@@ -87,7 +87,7 @@ class BBAppBuildPlugin implements Plugin<Project> {
                 issues << ("\"" + parts.get(0) + "\":https://jira.brandingbrand.com/browse/" + parts.get(0) + " - " + parts.get(1))
             }
         } else {
-            project.getLogger().warn("Could not read file - hockeyapp.issues")
+            project.getLogger().warn("File 'hockeyapp.issues' couldn't be read. No issues will be reported as resolved")
         }
 
         if(!issues.empty) {
