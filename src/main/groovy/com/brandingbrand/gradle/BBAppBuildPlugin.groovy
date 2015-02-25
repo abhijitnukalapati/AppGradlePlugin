@@ -1,6 +1,5 @@
 package com.brandingbrand.gradle
 
-import com.android.build.gradle.AppExtension
 import com.brandingbrand.gradle.tasks.PushToGithubTask
 import com.brandingbrand.gradle.tasks.SetupReleaseVersionTask
 import de.felixschulze.gradle.HockeyAppPluginExtension
@@ -48,8 +47,6 @@ class BBAppBuildPlugin implements Plugin<Project> {
             project.task('setupReleaseVersion', type: SetupReleaseVersionTask)
 
             configureHockeyAppPlugin(project)
-
-            configureAndroidPlugin(project)
 
             project.gradle.taskGraph.whenReady { taskGraph ->
                 if (taskGraph.hasTask(project.tasks.findByName('assembleRelease'))) {
@@ -202,13 +199,6 @@ class BBAppBuildPlugin implements Plugin<Project> {
         hockeyApp.status = 2 // enable downloads
         hockeyApp.notes = constructHockeyAppString(project)
     }
-
-    def configureAndroidPlugin(Project project) {
-        AppExtension androidExtension = project.('android')
-        androidExtension.defaultConfig.setVersionCode(readVersionCode(project))
-        androidExtension.defaultConfig.setVersionName(readVersionName(project))
-    }
-
 
     /**
      * Reads the version code depending on the buildtype specified.
