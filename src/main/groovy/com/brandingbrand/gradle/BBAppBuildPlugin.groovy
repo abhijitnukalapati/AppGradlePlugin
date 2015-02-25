@@ -114,6 +114,11 @@ class BBAppBuildPlugin implements Plugin<Project> {
                 isRelease = gitCommitBuildType.equalsIgnoreCase(RELEASE)
             }
 
+            /**
+             * Ensure this task runs only after we make changes to the gradle.properties
+             * file. This is strictly limited to ordering and doesn't indicate that the
+             * tasks will be executed
+             */
             mustRunAfter('bumpVersionCode', 'setupReleaseVersion')
         }
     }
