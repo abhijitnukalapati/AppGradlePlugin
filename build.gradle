@@ -1,0 +1,43 @@
+apply plugin: 'groovy'
+apply plugin: 'maven'
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+    compile 'com.android.tools.build:gradle:1.0.0' // android plugin
+    compile 'org.ajoberstar:gradle-git:0.13.0' // git plugin
+    compile 'de.felixschulze.gradle:gradle-hockeyapp-plugin:3.0' // hockeyapp plugin
+}
+
+repositories {
+    mavenCentral()
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath 'de.felixschulze.gradle:gradle-hockeyapp-plugin:3.0'
+        classpath 'com.android.tools.build:gradle:1.0.0'
+    }
+}
+
+group = 'com.brandingbrand'
+version = '0.1-SNAPSHOT'
+description = 'Gradle build plugin for Brandingbrand Android Apps'
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: "http://nexus.brandingbrand.com/nexus/content/repositories/releases/") {
+                authentication(userName: NEXUS_USER, password: NEXUS_PASSWORD)
+            }
+
+            snapshotRepository(url: "http://nexus.brandingbrand.com/nexus/content/repositories/snapshots/") {
+                authentication(userName: NEXUS_USER, password: NEXUS_PASSWORD)
+            }
+        }
+    }
+}
