@@ -174,7 +174,11 @@ class BBAppBuildPlugin implements Plugin<Project> {
     def addPrintFrameworkVersionTask(Project project) {
         project.task('printFrameworkVersion') {
             description = 'prints the framework dependency version'
-            println project.('bbapp').getFrameworkVersion()
+            if(project.('bbapp').getFrameworkVersion()?.trim()) {
+                println project.('bbapp').getFrameworkVersion()
+            } else {
+                project.getLogger().warn('No framework version provided')
+            }
         }
     }
 
