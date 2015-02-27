@@ -27,9 +27,14 @@ bbapp {
   hockeyAppDescription 'Android Stage app'
   useMavenVersioning true
 }
-
 ```
-### Tasks
+
+## Plugins
+
+- The HockeyApp plugin is applied and configured
+- The Android plugin is applied
+
+## Tasks
 
 The following tasks are available as part of the plugin:
 
@@ -53,8 +58,7 @@ updated.
 
  **Sample usage**: `./gradlew printFrameworkVersion`
 
-
-### Releasing a new version
+## Releasing a new version
 
 - Please make sure you run the following command prior to releasing a new version, to ensure the build isn't failing:
 
@@ -63,3 +67,5 @@ updated.
 - To upload a new version, the following command would accomplish the upload to the nexus servers:
 
  `./gradlew uploadArchives`
+
+
