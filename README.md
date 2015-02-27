@@ -22,6 +22,26 @@ _Default value_: false
 
 **Sample Usage**
 ```
+buildscript {
+    repositories {
+        mavenCentral()
+        repositories {
+            maven {
+                url "http://nexus.brandingbrand.com/nexus/content/repositories/releases/"
+                credentials {
+                    username NEXUS_USER
+                    password NEXUS_PASSWORD
+                }
+            }
+        }
+    }
+    dependencies {
+        classpath group: 'com.brandingbrand', name: 'BBAppGradlePlugin',
+                version: insertVersion
+    }
+}
+
+
 bbapp {
   frameworkVersion '3.5.7-SNAPSHOT'
   hockeyAppDescription 'Android Stage app'
@@ -67,5 +87,3 @@ updated.
 - To upload a new version, the following command would accomplish the upload to the nexus servers:
 
  `./gradlew uploadArchives`
-
-
