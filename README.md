@@ -54,9 +54,6 @@ updated.
  **Sample usage**: `./gradlew printFrameworkVersion`
 
 
-
-
-
 ### Releasing a new version
 
 - Please make sure you run the following command prior to releasing a new version, to ensure the build isn't failing:
