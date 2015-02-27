@@ -41,6 +41,7 @@ buildscript {
     }
 }
 
+apply plugin: 'bbapp'
 
 bbapp {
   frameworkVersion '3.5.7-SNAPSHOT'
