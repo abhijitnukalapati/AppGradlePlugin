@@ -10,12 +10,14 @@ import org.gradle.api.Project
 
 class BBAppBuildPlugin implements Plugin<Project> {
 
-    private String hockeyApp_noIssuesMessage = 'No issues to report'
+    private static final String HOCKEYAPP_API_TOKEN = 'e5280b32cf24468e93db89f70d046bbb'
+    private static final String HOCKEYAPP_NO_ISSUES_MESSAGE = 'No issues to report'
+    
+    public static final String RELEASE = "RELEASE"
+
     private String gitCommitBuildType = "qa release"
     private String buildType = "QA"
 
-    private final String HOCKEYAPP_API_TOKEN = 'e5280b32cf24468e93db89f70d046bbb'
-    public final String RELEASE = "RELEASE"
 
     void apply(Project project) {
 
@@ -92,7 +94,7 @@ class BBAppBuildPlugin implements Plugin<Project> {
                 sb.append(issue).append("\n")
             }
         } else {
-            sb.append(hockeyApp_noIssuesMessage)
+            sb.append(HOCKEYAPP_NO_ISSUES_MESSAGE)
         }
 
         return sb.toString()
