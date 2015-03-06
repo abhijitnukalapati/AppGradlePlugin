@@ -6,6 +6,9 @@ import de.felixschulze.gradle.HockeyAppPluginExtension
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.plugins.quality.Checkstyle
+import org.gradle.api.plugins.quality.CheckstyleExtension
 
 
 class BBAppBuildPlugin implements Plugin<Project> {
@@ -13,23 +16,18 @@ class BBAppBuildPlugin implements Plugin<Project> {
     private static final String HOCKEYAPP_API_TOKEN = 'e5280b32cf24468e93db89f70d046bbb'
     private static final String HOCKEYAPP_NO_ISSUES_MESSAGE = 'No issues to report'
     private static final String RELEASE = "RELEASE"
+    private static final String CHECKSTYLE_VERSION = "6.2"
 
     private String gitCommitBuildType = "qa release"
     private String buildType = "QA"
 
-
     void apply(Project project) {
+        // add the 'bbapp' extension object
+        project.extensions.create('bbapp', BBAppBuildPluginExtension)
 
-        project.configure(project) {
-            // add the 'bbapp' extension object
-            extensions.create('bbapp', BBAppBuildPluginExtension)
+        applyPlugins(project)
 
-            // apply the android plugin
-            plugins.apply('com.android.application')
-
-            // apply the hockeyapp plugin
-            plugins.apply('de.felixschulze.gradle.hockeyapp')
-        }
+        configureCheckstyle(project)
 
         addPushVersionToGithubTask(project)
 
@@ -49,15 +47,7 @@ class BBAppBuildPlugin implements Plugin<Project> {
 
             configureHockeyAppPlugin(project)
 
-            project.gradle.taskGraph.whenReady { taskGraph ->
-                if (taskGraph.hasTask(project.tasks.findByName('assembleRelease'))) {
-                    gitCommitBuildType = "release"
-                    buildType = RELEASE
-                } else {
-                    gitCommitBuildType = "qa release"
-                    buildType = "QA"
-                }
-            }
+            setVariablesBasedOnTaskGraph(project)
         }
     }
 
@@ -97,6 +87,19 @@ class BBAppBuildPlugin implements Plugin<Project> {
         }
 
         return sb.toString()
+    }
+
+    def applyPlugins(Project project) {
+        project.configure(project) {
+            // apply the android plugin
+            plugins.apply('com.android.application')
+
+            // apply the hockeyapp plugin
+            plugins.apply('de.felixschulze.gradle.hockeyapp')
+
+            // apply the checkstyle plugin
+            plugins.apply('checkstyle')
+        }
     }
 
     /**
@@ -197,12 +200,56 @@ class BBAppBuildPlugin implements Plugin<Project> {
         }
     }
 
+    def configureCheckstyle(Project project) {
+        // set defaults
+        CheckstyleExtension checkstyle = project.('checkstyle')
+        checkstyle.with {
+            toolVersion = CHECKSTYLE_VERSION
+        }
+
+        // create checkstyle task
+        Task checkstyleTask = project.task('checkstyle', type: Checkstyle) {
+            description 'applies the checkstyle config to the java files'
+            source 'src/main/java'
+            include '**/*.java'
+            exclude '**/gen/**'
+
+            // empty classpath
+            classpath = project.files()
+
+            /**
+             * Do not run checkstyle if a skipCheckstyle argument
+             * is provided via the command line (Ex: -PskipCheckstyle).
+             * This property should be ideally used only for
+             * development purposes
+             */
+            onlyIf { !project.hasProperty('skipCheckstyle') }
+        }
+
+        // checkstyle runs on every build
+        project.tasks.getByName('preBuild').dependsOn(checkstyleTask)
+    }
+
     def configureHockeyAppPlugin(Project project) {
         HockeyAppPluginExtension hockeyApp = project.('hockeyapp')
-        hockeyApp.apiToken = HOCKEYAPP_API_TOKEN
-        hockeyApp.notesType = 0 // textile formatting
-        hockeyApp.status = 2 // enable downloads
-        hockeyApp.notes = constructHockeyAppString(project)
+        hockeyApp.with {
+            apiToken = HOCKEYAPP_API_TOKEN
+            notesType = 0 // textile formatting
+            status = 2 // enable downloads
+            notes = constructHockeyAppString(project)
+        }
+    }
+
+    def setVariablesBasedOnTaskGraph(Project project){
+        project.gradle.taskGraph.whenReady { taskGraph ->
+            if (taskGraph.hasTask(project.tasks.findByName('assembleRelease'))) {
+                gitCommitBuildType = "release"
+                buildType = RELEASE
+            } else {
+                gitCommitBuildType = "qa release"
+                buildType = "QA"
+            }
+        }
     }
 
     /**
