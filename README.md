@@ -85,7 +85,7 @@ updated.
 
 - Please make sure you run the following command prior to releasing a new version, to ensure the build isn't failing:
 
- `./gradlew clean test`
+ `./gradlew clean check`
 
 - To upload a new version, the following command would accomplish the upload to the nexus servers:
 
