@@ -230,6 +230,12 @@ class BBAppBuildPlugin implements Plugin<Project> {
         project.tasks.getByName('preBuild').dependsOn(checkstyleTask)
     }
 
+    /**
+     * Configures the Hockey App Plugin by setting default
+     * values for the extension object
+     * @param project
+     * @return
+     */
     def configureHockeyAppPlugin(Project project) {
         HockeyAppPluginExtension hockeyApp = project.('hockeyapp')
         hockeyApp.with {
@@ -240,6 +246,11 @@ class BBAppBuildPlugin implements Plugin<Project> {
         }
     }
 
+    /**
+     * Sets the variables {@link #gitCommitBuildType} and {@link #buildType}
+     * depending on the current build type
+     * @param project
+     */
     def setVariablesBasedOnTaskGraph(Project project){
         project.gradle.taskGraph.whenReady { taskGraph ->
             if (taskGraph.hasTask(project.tasks.findByName('assembleRelease'))) {
