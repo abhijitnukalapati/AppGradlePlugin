@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE module PUBLIC
+    "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
+    "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
+
+<!-- Checkstyle configuration file which contains a set of checks (modules) 
+that can be applied to source files. Each module below has a brief description
+included. For detailed information, see http://checkstyle.sourceforge.net/ -->
+<module name="Checker">
+
+    <!-- module to enable @SuppressWarnings -->
+    <module name="SuppressWarningsFilter" />
+
+    <module name="TreeWalker">
+        <!-- module to enable @SuppressWarnings -->
+        <module name="SuppressWarningsHolder" />
+
+        <module name="EmptyBlock">
+            <!-- Checks that there is at least a comment in a block-->
+            <property name="option" value="text"/>
+        </module>
+
+        <!-- XXX: There is an issue with version 6.2 where the following
+        check fails despite the if statement being a single line if.
+        Until it is fixed, we ignore the check -->
+        <module name="NeedBraces">
+            <!-- Checks that there are braces around code blocks -->
+            <property name="allowSingleLineIf" value="true"/>
+            <property name="severity" value="ignore"/>
+        </module>
+
+        <!-- Checks that right curlies on CATCH, ELSE, FINALLY and TRY blocks are on
+          the same line. e.g., the following code is the required format:
+          <pre>
+            if {
+              ...
+            } else
+          </pre>
+          -->
+        <!-- and the following is not acceptable:
+        <pre>
+          if {
+            ...
+          }
+          else
+        </pre>
+        -->
+        <module name="RightCurly"/>
+
+        <!-- TODO: modify this to accomodate the left brace on the last line
+         if each conditional takes up one line due to the long nature of 
+        the complete conditional  -->
+        <module name="LeftCurly">
+            <!-- Checks for placement of the left curly brace ('{'). -->
+            <property name="option" value="nlow"/>
+            <property name="severity" value="ignore"/>
+        </module>
+
+        <!-- Checks that a class which has only private constructors is declared as final -->
+        <module name="FinalClass"/>
+
+        <!-- Checks that utility classes (classes that contain only static methods or 
+        fields in their API) do not have a public constructor -->
+        <module name="HideUtilityClassConstructor"/>
+
+        <!-- Checks that classes that override equals() also override hashCode().
+        This is emphasized in Effective Java as well -->
+        <module name="EqualsHashCode"/>
+
+        <!-- Checks that string literals are not used with '==' or '!=' -->
+        <module name="StringLiteralEquality"/>
+
+        <!-- Checks that certain exception types:
+            1. java.lang.Exception
+            2. java.lang.Throwable
+            3. java.lang.RuntimeException
+        do not appear in a catch statement -->
+        <module name="IllegalCatch"/>
+
+        <module name="DeclarationOrder">
+            <!-- Checks that the code order in a class follows Java Coding Conventions. The order should be as follows:
+            
+            1. Class (static) variables. First the public class variables, then protected, then package level (no access modifier), and then private.
+            2. Instance variables. First the public class variables, then protected, then package level (no access modifier), and then private.
+            3. Constructors
+            4. Methods
+            Note: We ignore the constructors order since sometimes it could be at the bottom of the class for models.
+            -->
+            <property name="ignoreConstructors" value="true"/>
+        </module>
+
+        <!-- Checks that any member value isn't explicitly assigned to its default value as it is
+        redundant -->
+        <module name="ExplicitInitialization"/>
+
+        <!-- Checks that the default is after all the cases in a switch statement -->
+        <module name="DefaultComesLast"/>
+
+        <module name="MultipleStringLiterals">
+            <!-- Checks that there aren't any string literals that occur more than 4 times.
+            These should be refactored to be constants -->
+            <property name="allowedDuplicates" value="4"/>
+            <property name="severity" value="warning"/>
+        </module>
+
+        <!-- Checks that there are no import statements that use the * notation -->
+        <module name="AvoidStarImport" />
+
+        <!-- Checks that there are no redundant import statements -->
+        <module name="RedundantImport"/>
+
+        <!-- Checks that there are no unused import statements -->
+        <module name="UnusedImports"/>
+
+        <!-- Checks that Java Style array declaration is used
+        e.g., String[] args is acceptable but String args[]
+        is not    
+        -->
+        <module name="ArrayTypeStyle"/>
+
+        <!-- Checks that the indentation is correct. Each tab = 4 spaces -->
+        <module name="Indentation">
+            <property name="lineWrappingIndentation" value="8"/>
+        </module>
+
+        <!-- Checks that there are no redundant modifiers -->
+        <module name="RedundantModifier"/>
+    </module>
+</module>
