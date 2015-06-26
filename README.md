@@ -83,6 +83,8 @@ updated.
 
 ## Releasing a new version
 
+- Update the `version` in `build.gradle`. For example, if is 1.0, change it to 1.1
+
 - Please make sure you run the following command prior to releasing a new version, to ensure the build isn't failing:
 
  `./gradlew clean check`
