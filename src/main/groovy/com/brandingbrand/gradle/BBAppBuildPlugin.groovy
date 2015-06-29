@@ -1,7 +1,7 @@
 package com.brandingbrand.gradle
 
 import com.brandingbrand.gradle.tasks.PushToGithubTask
-import com.brandingbrand.gradle.tasks.SetupReleaseVersionTask
+import com.brandingbrand.gradle.tasks.SetupVersionTask
 import de.felixschulze.gradle.HockeyAppPluginExtension
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -19,7 +19,6 @@ class BBAppBuildPlugin implements Plugin<Project> {
     private static final String CHECKSTYLE_VERSION = "6.2"
 
     private String gitCommitBuildType = "qa release"
-    private String buildType = "QA"
 
     void apply(Project project) {
         // add the 'bbapp' extension object
@@ -31,7 +30,7 @@ class BBAppBuildPlugin implements Plugin<Project> {
 
         addPushVersionToGithubTask(project)
 
-        addBumpVersionCodeTask(project)
+        addBumpBuildVersionTask(project)
 
         // we can access the plugin data/configuration
         // only after the project has been evaluated
@@ -43,7 +42,7 @@ class BBAppBuildPlugin implements Plugin<Project> {
 
             addSetHockeyAppVersionTask(project)
 
-            project.task('setupReleaseVersion', type: SetupReleaseVersionTask)
+            project.task('setupVersion', type: SetupVersionTask)
 
             configureHockeyAppPlugin(project)
 
@@ -120,34 +119,43 @@ class BBAppBuildPlugin implements Plugin<Project> {
              * file. This is strictly limited to ordering and doesn't indicate that the
              * tasks will be executed
              */
-            mustRunAfter('bumpVersionCode', 'setupReleaseVersion')
+            mustRunAfter('bumpBuildVersion', 'setupVersion')
         }
     }
 
+
     /**
-     * Adds a task the increments and stores version code - VERSION_CODE
+     * Adds a task the increments and stores version name and version code
      * @param project
      */
-    def addBumpVersionCodeTask(Project project){
-        project.task('bumpVersionCode') << {
-            description = 'increments and stores version code - VERSION_CODE'
-            def versionPropsFile = project.file("${project.getRootDir().getAbsolutePath()}/gradle.properties")
-            if (versionPropsFile.canRead()) {
-                def Properties versionProps = new Properties()
-                versionProps.load(new FileInputStream(versionPropsFile))
+    def addBumpBuildVersionTask(Project project) {
+      project.task('bumpBuildVersion') << {
+          description = 'increments and stores version code - VERSION_CODE'
+          def versionPropsFile = project.file("${project.getRootDir().getAbsolutePath()}/gradle.properties")
+          if (versionPropsFile.canRead()) {
+              def Properties versionProps = new Properties()
+              versionProps.load(new FileInputStream(versionPropsFile))
 
-                def newVersionCode = versionProps['VERSION_CODE_QA'].toInteger() + 1
-                versionProps['VERSION_CODE_QA'] = newVersionCode.toString()
+              String oldVersionName = versionProps['VERSION_NAME'].toString()
+              VersionParts parts = getVersionParts(oldVersionName)
+              parts.incrementBuild()
 
-                // update all versions, except for the release type, with the new version code
-                project.('android').applicationVariants.all { variant ->
-                    variant.mergedFlavor.versionCode = newVersionCode
-                }
-                versionProps.store(versionPropsFile.newWriter(), null)
-            } else {
-                throw new GradleException("Could not read version.properties!")
-            }
-        }
+              String newVersionName = parts.buildVersionName()
+              def newVersionCode = parts.calculateVersionCode()
+
+              versionProps['VERSION_CODE'] = newVersionCode.toString()
+              versionProps['VERSION_NAME'] = newVersionName
+
+              // update all versions with the new version code
+              project.('android').applicationVariants.all { variant ->
+                  variant.mergedFlavor.versionCode = newVersionCode
+                  variant.mergedFlavor.versionName = newVersionName
+              }
+              versionProps.store(versionPropsFile.newWriter(), null)
+          } else {
+              throw new GradleException("Could not read version.properties!")
+          }
+      }
     }
 
     /**
@@ -157,12 +165,12 @@ class BBAppBuildPlugin implements Plugin<Project> {
     def configureTaskDependencies(Project project) {
         project.('android').applicationVariants.all { variant ->
             if (variant.buildType.name == 'release') {
-                variant.mergedFlavor.versionCode = readVersionCode(project, "RELEASE")
+                variant.mergedFlavor.versionCode = readVersionCode(project)
 
                 // modify the version name/code prior to processing the manifest
-                project.tasks.getByName("process${variant.name.capitalize()}Manifest").dependsOn('setupReleaseVersion')
+                project.tasks.getByName("process${variant.name.capitalize()}Manifest").dependsOn('setupVersion')
             } else {
-                variant.mergedFlavor.versionCode = readVersionCode(project, "QA")
+                variant.mergedFlavor.versionCode = readVersionCode(project)
             }
 
             // precede every hockeyapp deployment with a push to github to ensure all version
@@ -195,7 +203,7 @@ class BBAppBuildPlugin implements Plugin<Project> {
         project.task('setHockeyAppVersion') << {
             description = 'sets the version and version code for hockeyapp builds'
 
-            def versionString = "h4. v${readVersionName(project)}(${readVersionCode(project, buildType)})"
+            def versionString = "h4. v${readVersionName(project)}(${readVersionCode(project)})"
             project.('hockeyapp').notes = versionString << project.('hockeyapp').notes
         }
     }
@@ -255,10 +263,8 @@ class BBAppBuildPlugin implements Plugin<Project> {
         project.gradle.taskGraph.whenReady { taskGraph ->
             if (taskGraph.hasTask(project.tasks.findByName('assembleRelease'))) {
                 gitCommitBuildType = "release"
-                buildType = RELEASE
             } else {
                 gitCommitBuildType = "qa release"
-                buildType = "QA"
             }
         }
     }
@@ -268,16 +274,12 @@ class BBAppBuildPlugin implements Plugin<Project> {
      * all buildtypes which are not "RELEASE" (case-insensitive) are
      * considered to be "QA"  (case-insensitive)
      */
-    static readVersionCode(Project project, buildtype = "QA") {
+    static readVersionCode(Project project) {
         def versionPropsFile = project.file("${project.getRootDir().getAbsolutePath()}/gradle.properties")
         if (versionPropsFile.canRead()) {
             def Properties versionProps = new Properties()
             versionProps.load(new FileInputStream(versionPropsFile))
-            if(buildtype.equalsIgnoreCase("QA")) {
-                return versionProps['VERSION_CODE_QA'].toInteger()
-            } else {
-                return versionProps['VERSION_CODE_RELEASE'].toInteger()
-            }
+            return versionProps['VERSION_CODE'].toInteger()
         } else {
             throw new GradleException("Could not read version.properties!")
         }
@@ -295,6 +297,79 @@ class BBAppBuildPlugin implements Plugin<Project> {
         } else {
             throw new GradleException("Could not read file - version.properties!")
         }
+    }
+
+    /**
+     * Retreives the different version bits from the given
+     * versionName. The versionName should be in the form of
+     * x.x (or) x.x.x (or) x.x.x.x
+     */
+    static VersionParts getVersionParts(String versionName) {
+        List<String> versions = versionName.tokenize('\\.')
+
+        VersionParts parts = new VersionParts();
+        if (versions.size() == 2) {
+            parts.major = versions.get(0).toInteger()
+            parts.minor = versions.get(1).toInteger()
+        } else if (versions.size() == 3) {
+            parts.major = versions.get(0).toInteger()
+            parts.minor = versions.get(1).toInteger()
+            parts.revision = versions.get(2).toInteger()
+        } else if (versions.size() == 4) {
+            parts.major = versions.get(0).toInteger()
+            parts.minor = versions.get(1).toInteger()
+            parts.revision = versions.get(2).toInteger()
+            parts.build = versions.get(3).toInteger()
+        } else {
+            throw new GradleException('Version number should be in the form of x.x (or) x.x.x (or) x.x.x.x')
+        }
+
+        return parts;
+    }
+
+    /**
+     * A class that holds the parts of a version name
+     * For example, the version name 3.2.4.1, the various
+     * parts are 3 (major), 2 (minor), 4(revision), 1 (build)
+     *
+     */
+    public static class VersionParts {
+        int major;
+        int minor;
+        int revision;
+        int build; // qa build increment
+
+        /**
+         * Increments the build number
+         */
+        def incrementBuild() {
+            this.build++;
+        }
+
+        /**
+         * Calculates the version code based on
+         * a standard formula
+         */
+        int calculateVersionCode() {
+            return (1000000 * this.major
+                      + 10000 * this.minor
+                      + 100   * this.revision
+                      + this.build)
+        }
+
+        /**
+         * Builds the version name as a String using the
+         * parts of the version. If a release version name
+         * is being built, the build number is dropped
+         */
+        String buildVersionName(boolean isRelease = false) {
+            if(isRelease) {
+                return "${this.major}.${this.minor}.${this.revision}"
+            } else {
+                return "${this.major}.${this.minor}.${this.revision}.${this.build}"
+            }
+        }
+
     }
 
 }
