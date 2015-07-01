@@ -61,16 +61,14 @@ bbapp {
 
 The following tasks are available as part of the plugin:
 
-- `bumpVersionCode` assumes that the buildtype is something other than a "release" and simply increments the version code.
+- `bumpBuildVersion` is used to increment the build version each time a QA build is made. For example, if the current release build is 2.3.1, the qa build would be 2.3.1.1 and next one would be 2.3.1.2 and so on and so forth. The version code is computed based on this versionName. So, there shouldn't ever be a need to update it manually
 
- **Sample usage**: `./gradlew bumpVersionCode installUat`
+ **Sample usage**: `./gradlew bumpBuildVersion`
 
-- `setupReleaseVersion` takes a parameter `releaseVersionName` to set the release version
-and updates the version code accordingly. This task occurs prior to `assembleRelease` or
-`installRelease`. So it doesn't need to be explicitly called but the parameter has to be
-set via the command line; otherwise the task is skipped and the version name/code aren't
-updated.
-**Sample usage**: `./gradlew assembleRelease -PreleaseVersionName=4.3.2`
+- `prepareReleaseVersion` takes a parameter `appVersionName` to set the release version
+and updates the version code accordingly. If no parameter is provided  the task makes use of `VERSION_CODE` to setup the versionName by dropping the build number, (i:e, 3.2.1.1 becomes 3.2.1) and computes the versionCode. This task occurs prior to `assembleRelease` or `installRelease`, so it doesn't necessarily have to be explicitly called.
+
+ **Sample usage**: `./gradlew prepareReleaseVersion 4.3.2` or simply `./gradlew prepareReleaseVersion `
 
 - `pushVersionToGithub` to automatically push changes to gradle.properties whenever a build is uploaded to hockeyapp
 
@@ -92,3 +90,21 @@ updated.
 - To upload a new version, the following command would accomplish the upload to the nexus servers:
 
  `./gradlew uploadArchives`
+ 
+## Changelog
+
+See [here](https://github.com/brandingbrand/BBAppGradlePlugin/releases)
+ 
+ 
+##  Legacy Tasks - v1.0
+
+- `bumpVersionCode` assumes that the buildtype is something other than a "release" and simply increments the version code.
+
+ **Sample usage**: `./gradlew bumpVersionCode installUat`
+
+- `setupReleaseVersion` takes a parameter `releaseVersionName` to set the release version
+and updates the version code accordingly. This task occurs prior to `assembleRelease` or
+`installRelease`. So it doesn't need to be explicitly called but the parameter has to be
+set via the command line; otherwise the task is skipped and the version name/code aren't
+updated.
+**Sample usage**: `./gradlew assembleRelease -PreleaseVersionName=4.3.2`
