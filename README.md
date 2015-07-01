@@ -91,6 +91,12 @@ and updates the version code accordingly. If no parameter is provided  the task 
 
  `./gradlew uploadArchives`
  
+- After successfully publishing the release, tag the release on Github:
+    ```
+    git tag -a v3.1 -m "Release version 3.1"
+    git push v3.1
+    ```
+ 
 ## Changelog
 
 See [here](https://github.com/brandingbrand/BBAppGradlePlugin/releases)
