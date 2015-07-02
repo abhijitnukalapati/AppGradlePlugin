@@ -101,6 +101,10 @@ and updates the version code accordingly. If no parameter is provided  the task 
 
 See [here](https://github.com/brandingbrand/BBAppGradlePlugin/releases)
  
+## Migration from v1.0 to v1.1
+
+- Remove `VERSION_CODE_QA` and `VERSION_CODE_RELEASE` from gradle.properties and replace it with `VERSION_CODE` having the same value
+- Replace the variable `VERSION_CODE_RELEASE` in `{appDirectory}/build.gradle` with `VERSION_CODE`
  
 ##  Legacy Tasks - v1.0
 
