@@ -68,7 +68,7 @@ The following tasks are available as part of the plugin:
 - `prepareReleaseVersion` takes a parameter `appVersionName` to set the release version
 and updates the version code accordingly. If no parameter is provided  the task makes use of `VERSION_CODE` to setup the versionName by dropping the build number, (i:e, 3.2.1.1 becomes 3.2.1) and computes the versionCode. This task occurs prior to `assembleRelease` or `installRelease`, so it doesn't necessarily have to be explicitly called.
 
- **Sample usage**: `./gradlew prepareReleaseVersion 4.3.2` or simply `./gradlew prepareReleaseVersion `
+ **Sample usage**: `./gradlew prepareReleaseVersion -PappVersionName=4.3.2` or simply `./gradlew prepareReleaseVersion `
 
 - `pushVersionToGithub` to automatically push changes to gradle.properties whenever a build is uploaded to hockeyapp
 
