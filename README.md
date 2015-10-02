@@ -73,7 +73,9 @@ and updates the version code accordingly. If no parameter is provided  the task 
 - `pushVersionToGithub` to automatically push changes to gradle.properties whenever a build is uploaded to hockeyapp
 
  **Sample usage**: `./gradlew pushVersionToGithub`
- *Please note, however, that this task typically doesn't have to be called explicitly. It is implicitly invoked everytime a hockeyapp task is executed*
+ *Please note, however, that this task typically doesn't have to be called explicitly. It is implicitly invoked everytime a hockeyapp task is executed. But if you would
+like to skip this task, you can do by using the argument* `skipPushToGithub` - *On the command line it would look like:*
+`./gradlew uploadUatToHockeyApp -PskipPushToGithub`
 
 - `printFrameworkVersion`, as the name suggests, prints the name of the current framework version that the client(app) is using. *This is run during the configuration phase*
 

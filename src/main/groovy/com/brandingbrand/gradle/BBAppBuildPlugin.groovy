@@ -15,7 +15,7 @@ import org.gradle.api.plugins.quality.CheckstyleExtension
 
 class BBAppBuildPlugin implements Plugin<Project> {
 
-    private static final String HOCKEYAPP_API_TOKEN = 'e5280b32cf24468e93db89f70d046bbb'
+    private static final String HOCKEYAPP_API_TOKEN = 'c8f51a0118254670b8b209a507484f12'
     private static final String HOCKEYAPP_NO_ISSUES_MESSAGE = 'No issues to report'
     private static final String RELEASE = "RELEASE"
     private static final String CHECKSTYLE_VERSION = "6.2"
