@@ -28,6 +28,15 @@ group = 'com.brandingbrand'
 version = '1.1'
 description = 'Gradle build plugin for Brandingbrand Android Apps'
 
+// make sure we are building with Java 1.7 as
+// some machines could be using Java 1.8 (typically)
+// for libraries such as RetroLambda
+//
+// This enables the java compiling process to work
+// independently of the system/machine configuration
+sourceCompatibility = "1.7"
+targetCompatibility = "1.7"
+
 uploadArchives {
     repositories {
         mavenDeployer {
