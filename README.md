@@ -12,11 +12,6 @@ The plugin has the following properties that can be configured
 - `frameworkVersion`
  The framework version that the client will be using
  _Default value_: null
- 
-- `hockeyAppDescription`
- The description for the HockeyApp uploads. This will be visible right below the version number
-in the HockeyApp Release Notes
-_Default value_: 'No description provided'
 
 - `useMavenVersioning`
 A boolean to indicate if the maven multiplier has to be used while computing the version code. See `SetupReleaseVersion` task for more info

@@ -16,6 +16,12 @@ public class VersionParts {
      * Increments the build number
      */
     def incrementBuild() {
+        // if this is first qa, increment
+        // the revision as the earlier revision
+        // should have already been released
+        if(this.build == 0) {
+            this.revision++;
+        }
         this.build++;
     }
 

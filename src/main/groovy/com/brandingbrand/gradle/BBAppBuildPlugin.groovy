@@ -1,8 +1,6 @@
 package com.brandingbrand.gradle
 
-import com.brandingbrand.gradle.tasks.PushToGithubTask
 import com.brandingbrand.gradle.tasks.PrepReleaseVersionTask
-import com.brandingbrand.gradle.VersionParts
 
 import de.felixschulze.gradle.HockeyAppPluginExtension
 
@@ -16,11 +14,8 @@ import org.gradle.api.plugins.quality.CheckstyleExtension
 class BBAppBuildPlugin implements Plugin<Project> {
 
     private static final String HOCKEYAPP_API_TOKEN = 'c8f51a0118254670b8b209a507484f12'
-    private static final String HOCKEYAPP_NO_ISSUES_MESSAGE = 'No issues to report'
     private static final String RELEASE = "RELEASE"
     private static final String CHECKSTYLE_VERSION = "6.2"
-
-    private String gitCommitBuildType = "qa release"
 
     void apply(Project project) {
         // add the 'bbapp' extension object
@@ -29,8 +24,6 @@ class BBAppBuildPlugin implements Plugin<Project> {
         applyPlugins(project)
 
         configureCheckstyle(project)
-
-        addPushVersionToGithubTask(project)
 
         addBumpBuildVersionTask(project)
 
@@ -47,47 +40,7 @@ class BBAppBuildPlugin implements Plugin<Project> {
             project.task('prepareReleaseVersion', type: PrepReleaseVersionTask)
 
             configureHockeyAppPlugin(project)
-
-            setVariablesBasedOnTaskGraph(project)
         }
-    }
-
-    /**
-     * Reads the file named 'hockeyapp.issues',  parses the issue and the
-     * issue description using the delimiter ':' and constructs/formats a string with
-     * a JIRA link for the issue.
-     *
-     * For example, a line in the file would be as follows:
-     *
-     * VITAANDJS-531:Resolved issue with bar code scan icon
-     */
-    String constructHockeyAppString(Project project) {
-        def issuesFile = project.file("${project.getRootDir().getAbsolutePath()}/hockeyapp.issues")
-        StringBuilder sb = new StringBuilder()
-        sb.append("\n\n")
-        sb.append(project.('bbapp').getHockeyAppDescription())
-        sb.append("\n\n\n")
-        sb.append("_Resolved Issues_").append("\n")
-
-        def issues = []
-        if(issuesFile.canRead()) {
-            issuesFile.eachLine { line ->
-                List<String> parts = line.tokenize(':')
-                issues << ("\"" + parts.get(0) + "\":https://jira.brandingbrand.com/browse/" + parts.get(0) + " - " + parts.get(1))
-            }
-        } else {
-            project.getLogger().warn("File 'hockeyapp.issues' couldn't be read. No issues will be reported as resolved")
-        }
-
-        if(!issues.empty) {
-            issues.each { issue ->
-                sb.append(issue).append("\n")
-            }
-        } else {
-            sb.append(HOCKEYAPP_NO_ISSUES_MESSAGE)
-        }
-
-        return sb.toString()
     }
 
     def applyPlugins(Project project) {
@@ -102,29 +55,6 @@ class BBAppBuildPlugin implements Plugin<Project> {
             plugins.apply('checkstyle')
         }
     }
-
-    /**
-     * Adds a task that commits and pushes changes to the
-     * gradle.properties file to remote Git repo (origin)
-     * @param project
-     */
-    def addPushVersionToGithubTask(Project project) {
-        project.task('pushVersionToGithub', type: PushToGithubTask) {
-            doFirst {
-                commitMessage = "NO-TICKET incrementing version for ${gitCommitBuildType}"
-                filePatterns = ['gradle.properties']
-                isRelease = gitCommitBuildType.equalsIgnoreCase(RELEASE)
-            }
-
-            /**
-             * Ensure this task runs only after we make changes to the gradle.properties
-             * file. This is strictly limited to ordering and doesn't indicate that the
-             * tasks will be executed
-             */
-            mustRunAfter('bumpBuildVersion', 'prepareReleaseVersion')
-        }
-    }
-
 
     /**
      * Adds a task the increments and stores version name and version code
@@ -155,7 +85,7 @@ class BBAppBuildPlugin implements Plugin<Project> {
               }
               versionProps.store(versionPropsFile.newWriter(), null)
           } else {
-              throw new GradleException("Could not read version.properties!")
+              throw new GradleException("Could not read gradle.properties!")
           }
       }
     }
@@ -175,9 +105,9 @@ class BBAppBuildPlugin implements Plugin<Project> {
                 variant.mergedFlavor.versionCode = readVersionCode(project)
             }
 
-            // precede every hockeyapp deployment with a push to github to ensure all version
-            // changes are synced up with remote
-            project.tasks.getByName("upload${variant.name.capitalize()}ToHockeyApp").dependsOn('pushVersionToGithub', 'setHockeyAppVersion')
+            // precede every hockeyapp deployment with setting the version in the release notes
+            Task hockeyAppTask = project.tasks.getByName("upload${variant.name.capitalize()}ToHockeyApp")
+            hockeyAppTask.dependsOn('setHockeyAppVersion')
         }
     }
 
@@ -191,7 +121,7 @@ class BBAppBuildPlugin implements Plugin<Project> {
             if(project.('bbapp').getFrameworkVersion()?.trim()) {
                 println project.('bbapp').getFrameworkVersion()
             } else {
-                project.getLogger().warn('No framework version provided')
+                project.getLogger().warn("No framework version provided - most likely because this isn't a framework app")
             }
         }
     }
@@ -205,8 +135,11 @@ class BBAppBuildPlugin implements Plugin<Project> {
         project.task('setHockeyAppVersion') << {
             description = 'sets the version and version code for hockeyapp builds'
 
-            def versionString = "h4. v${readVersionName(project)}(${readVersionCode(project)})"
-            project.('hockeyapp').notes = versionString << project.('hockeyapp').notes
+            StringBuilder sb = new StringBuilder()
+            sb.append("h4. v${readVersionName(project)}\n\n")
+            sb.append("Please see JIRA")
+
+            project.('hockeyapp').notes = sb.toString()
         }
     }
 
@@ -252,29 +185,12 @@ class BBAppBuildPlugin implements Plugin<Project> {
             apiToken = HOCKEYAPP_API_TOKEN
             notesType = 0 // textile formatting
             status = 2 // enable downloads
-            notes = constructHockeyAppString(project)
+            notes = '' // set in addSetHockeyAppVersionTask()
         }
     }
 
     /**
-     * Sets the variables {@link #gitCommitBuildType} and {@link #buildType}
-     * depending on the current build type
-     * @param project
-     */
-    def setVariablesBasedOnTaskGraph(Project project){
-        project.gradle.taskGraph.whenReady { taskGraph ->
-            if (taskGraph.hasTask(project.tasks.findByName('assembleRelease'))) {
-                gitCommitBuildType = "release"
-            } else {
-                gitCommitBuildType = "qa release"
-            }
-        }
-    }
-
-    /**
-     * Reads the version code depending on the buildtype specified.
-     * all buildtypes which are not "RELEASE" (case-insensitive) are
-     * considered to be "QA"  (case-insensitive)
+     * Reads the version code from gradle.properties file
      */
     static readVersionCode(Project project) {
         def versionPropsFile = project.file("${project.getRootDir().getAbsolutePath()}/gradle.properties")
@@ -283,7 +199,7 @@ class BBAppBuildPlugin implements Plugin<Project> {
             versionProps.load(new FileInputStream(versionPropsFile))
             return versionProps['VERSION_CODE'].toInteger()
         } else {
-            throw new GradleException("Could not read version.properties!")
+            throw new GradleException("Could not read gradle.properties!")
         }
     }
 
@@ -297,12 +213,12 @@ class BBAppBuildPlugin implements Plugin<Project> {
             versionProps.load(new FileInputStream(versionPropsFile))
             return versionProps['VERSION_NAME'].toString()
         } else {
-            throw new GradleException("Could not read file - version.properties!")
+            throw new GradleException("Could not read file - gradle.properties!")
         }
     }
 
     /**
-     * Retreives the different version bits from the given
+     * Retrieves the different version bits from the given
      * versionName. The versionName should be in the form of
      * x.x (or) x.x.x (or) x.x.x.x
      */
