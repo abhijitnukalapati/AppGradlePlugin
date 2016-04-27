@@ -39,11 +39,11 @@ targetCompatibility = "1.7"
 uploadArchives {
     repositories {
         mavenDeployer {
-            repository(url: "http://nexus.brandingbrand.com/nexus/content/repositories/releases/") {
+            repository(url: "http://nexus.brandingbrand.com/content/repositories/releases/") {
                 authentication(userName: NEXUS_USER, password: NEXUS_PASSWORD)
             }
 
-            snapshotRepository(url: "http://nexus.brandingbrand.com/nexus/content/repositories/snapshots/") {
+            snapshotRepository(url: "http://nexus.brandingbrand.com/content/repositories/snapshots/") {
                 authentication(userName: NEXUS_USER, password: NEXUS_PASSWORD)
             }
         }
